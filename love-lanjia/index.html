@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Word Highlight Extractor - For Lanjia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 30%, #f48fb1 70%, #ec407a 100%);
+            min-height: 100vh;
+            color: #4a2040;
+            overflow-x: hidden;
+        }
+
+        /* Floating hearts background */
+        .hearts-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .heart-float {
+            position: absolute;
+            font-size: 1.5em;
+            opacity: 0.15;
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.15;
+            }
+
+            90% {
+                opacity: 0.15;
+            }
+
+            100% {
+                transform: translateY(-10vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header .heart-icon {
+            font-size: 2.8em;
+            display: inline-block;
+            animation: heartbeat 1.2s infinite;
+        }
+
+        @keyframes heartbeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.15);
+            }
+
+            28% {
+                transform: scale(1);
+            }
+
+            42% {
+                transform: scale(1.15);
+            }
+
+            56% {
+                transform: scale(1);
+            }
+        }
+
+        .header h1 {
+            font-size: 2em;
+            font-weight: 700;
+            color: #c2185b;
+            margin: 10px 0 5px;
+            text-shadow: 0 1px 3px rgba(194, 24, 91, 0.15);
+        }
+
+        .header p {
+            color: #ad1457;
+            font-size: 1em;
+            opacity: 0.85;
+        }
+
+        /* Card style panels */
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(236, 64, 122, 0.15);
+            padding: 28px;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .card-title {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: #c2185b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Instructions */
+        .instructions {
+            font-size: 0.92em;
+            color: #6d3b5e;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+        }
+
+        .kbd {
+            display: inline-block;
+            background: #fce4ec;
+            border: 1px solid #f48fb1;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.88em;
+            font-family: monospace;
+        }
+
+        /* Paste area */
+        .paste-zone {
+            position: relative;
+            min-height: 220px;
+            border: 2px dashed #f48fb1;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: text;
+            transition: border-color 0.3s, background 0.3s;
+            overflow: auto;
+            max-height: 400px;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .paste-zone:hover {
+            border-color: #ec407a;
+        }
+
+        .paste-zone:focus {
+            outline: none;
+            border-color: #c2185b;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(194, 24, 91, 0.1);
+        }
+
+        .paste-zone.empty::before {
+            content: 'Paste your Word content here ✨\A(Copy from Word, then Ctrl+V / ⌘+V to paste)';
+            white-space: pre-wrap;
+            color: #e091b5;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            font-size: 1.05em;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .btn {
+            padding: 11px 28px;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec407a, #c2185b);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(236, 64, 122, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 64, 122, 0.45);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #fce4ec;
+            color: #c2185b;
+            border: 1px solid #f48fb1;
+        }
+
+        .btn-secondary:hover {
+            background: #f8bbd0;
+        }
+
+        /* Result area */
+        .result-area {
+            display: none;
+        }
+
+        .result-area.show {
+            display: block;
+        }
+
+        .result-text {
+            min-height: 120px;
+            max-height: 400px;
+            overflow: auto;
+            background: #fffafc;
+            border: 1px solid #f8bbd0;
+            border-radius: 12px;
+            padding: 20px;
+            line-height: 1.8;
+            font-size: 0.95em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #4a2040;
+            user-select: text;
+        }
+
+        .result-text .highlight-block {
+            background: linear-gradient(to right, #fff9c4, #fff176);
+            padding: 2px 6px;
+            border-radius: 3px;
+            border-left: 3px solid #fbc02d;
+            display: block;
+            margin: 4px 0;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: #c2185b;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 0.92em;
+            box-shadow: 0 4px 20px rgba(194, 24, 91, 0.4);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85em;
+            color: #ad1457;
+            opacity: 0.7;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px 12px 40px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .paste-zone {
+                min-height: 160px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.88em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Floating hearts background -->
+    <div class="hearts-bg" id="heartsBg"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="heart-icon">💝</div>
+            <h1>Word Highlight Extractor</h1>
+            <p>A little tool made just for Lanjia 💕</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card">
+            <div class="card-title">📖 How to Use</div>
+            <div class="instructions">
+                <ol>
+                    <li>Select the content you need in <strong>Word</strong> (<span class="kbd">Ctrl+A</span> to select
+                        all, or manually select a portion)</li>
+                    <li>Copy it (<span class="kbd">Ctrl+C</span> or <span class="kbd">⌘+C</span>)</li>
+                    <li>Click the paste area below and paste (<span class="kbd">Ctrl+V</span> or <span
+                            class="kbd">⌘+V</span>)</li>
+                    <li>Click the <strong>"Extract Highlights"</strong> button, and the highlighted text will appear
+                        below ✨</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Paste area -->
+        <div class="card">
+            <div class="card-title">📋 Paste Area</div>
+            <div class="paste-zone empty" id="pasteZone" contenteditable="true"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="extractHighlights()">✨ Extract Highlights</button>
+                <button class="btn btn-secondary" onclick="clearAll()">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <!-- Result area -->
+        <div class="card result-area" id="resultCard">
+            <div class="card-title">🌟 Extracted Result</div>
+            <div class="result-text" id="resultText"></div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="copyResult()">📋 Copy Result</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Made with 💗 February 2026
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ========== Floating hearts ==========
+        (function createHearts() {
+            const container = document.getElementById('heartsBg');
+            const hearts = ['💕', '💗', '💖', '💘', '❤️', '🩷', '🤍'];
+            for (let i = 0; i < 20; i++) {
+                const el = document.createElement('span');
+                el.className = 'heart-float';
+                el.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                el.style.left = Math.random() * 100 + '%';
+                el.style.fontSize = (0.8 + Math.random() * 1.5) + 'em';
+                el.style.animationDuration = (8 + Math.random() * 14) + 's';
+                el.style.animationDelay = (Math.random() * 12) + 's';
+                container.appendChild(el);
+            }
+        })();
+
+        // ========== Paste zone placeholder ==========
+        const pasteZone = document.getElementById('pasteZone');
+        pasteZone.addEventListener('input', function () {
+            this.classList.toggle('empty', this.innerHTML.trim() === '' || this.textContent.trim() === '');
+        });
+        pasteZone.addEventListener('paste', function () {
+            setTimeout(() => {
+                this.classList.toggle('empty', this.innerHTML.trim() === '' || this.textContent.trim() === '');
+            }, 100);
+        });
+
+        // ========== Highlight detection ==========
+        /**
+         * Check whether a background-color value represents a highlight.
+         * We consider anything that is NOT white, transparent, or empty as a highlight.
+         */
+        function isHighlighted(style) {
+            if (!style) return false;
+
+            // Check mso-highlight (Word-specific)
+            const msoHighlight = style.match(/mso-highlight\s*:\s*([^;"]+)/i);
+            if (msoHighlight) return true;
+
+            // Get background or background-color
+            let bg = style.match(/background-color\s*:\s*([^;"]+)/i);
+            if (!bg) bg = style.match(/background\s*:\s*([^;"]+)/i);
+            if (!bg) return false;
+
+            const val = bg[1].trim().toLowerCase();
+            if (!val || val === 'transparent' || val === 'initial' || val === 'inherit' || val === 'none') return false;
+
+            // White variants
+            if (val === '#fff' || val === '#ffffff' || val === 'white') return false;
+            if (val === 'rgb(255, 255, 255)' || val === 'rgb(255,255,255)') return false;
+            if (val === 'rgba(0, 0, 0, 0)' || val === 'rgba(0,0,0,0)') return false;
+
+            // Window/windowtext (Word defaults)
+            if (val === 'window' || val === 'windowtext') return false;
+
+            return true;
+        }
+
+        /**
+         * Recursively walk the DOM tree in the paste zone and collect text from
+         * highlighted elements. We also handle nested elements — if a parent is
+         * highlighted, all its text children count.
+         */
+        function collectHighlightedText(node, parentIsHighlighted) {
+            const results = [];
+
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                if (parentIsHighlighted && text.trim()) {
+                    results.push(text);
+                }
+                return results;
+            }
+
+            if (node.nodeType !== Node.ELEMENT_NODE) return results;
+
+            const el = node;
+            const styleAttr = el.getAttribute('style') || '';
+            const highlighted = parentIsHighlighted || isHighlighted(styleAttr);
+
+            for (const child of el.childNodes) {
+                results.push(...collectHighlightedText(child, highlighted));
+            }
+
+            // If this element is a block-level element and produced results, add a newline separator
+            if (results.length > 0) {
+                const display = window.getComputedStyle ? window.getComputedStyle(el).display : '';
+                const tag = el.tagName.toLowerCase();
+                const blockTags = ['p', 'div', 'li', 'tr', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'table'];
+                if (blockTags.includes(tag) || display === 'block' || display === 'list-item' || display === 'table-row') {
+                    results.push('\n');
+                }
+            }
+
+            return results;
+        }
+
+        // ========== Extract ==========
+        function extractHighlights() {
+            const zone = document.getElementById('pasteZone');
+            if (!zone.textContent.trim()) {
+                showToast('Please paste your Word content first 💫');
+                return;
+            }
+
+            const texts = collectHighlightedText(zone, false);
+            // Merge & clean up
+            let result = texts.join('').replace(/\n{3,}/g, '\n\n').trim();
+
+            const resultCard = document.getElementById('resultCard');
+            const resultText = document.getElementById('resultText');
+
+            if (!result) {
+                resultText.textContent = 'No highlighted content found 🤔\n\nTip: Make sure you used the "Text Highlight Color" feature in Word (not font color or shading).';
+                resultCard.classList.add('show');
+                return;
+            }
+
+            resultText.textContent = result;
+            resultCard.classList.add('show');
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showToast('Done! Extracted ' + result.length + ' characters 🎉');
+        }
+
+        // ========== Copy ==========
+        function copyResult() {
+            const text = document.getElementById('resultText').textContent;
+            if (!text || text.startsWith('No highlighted')) {
+                showToast('Nothing to copy');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard ✅');
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('Copied to clipboard ✅');
+            });
+        }
+
+        // ========== Clear ==========
+        function clearAll() {
+            pasteZone.innerHTML = '';
+            pasteZone.classList.add('empty');
+            document.getElementById('resultCard').classList.remove('show');
+            document.getElementById('resultText').textContent = '';
+            showToast('Cleared 🧹');
+        }
+
+        // ========== Toast ==========
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+    </script>
+</body>
+
+</html>
